@@ -1,8 +1,18 @@
 import random
 import copy
 
+
 class Card():
+    """
+    Implement a basic playing card
+    """
     def __init__(self, value=1, rank="Ace", suit="Spades"):
+        """
+
+        :param value: blackjack value of card
+        :param rank: type of card (e.g. King)
+        :param suit: {Diamonds, Hearts, Spades, Clubs}
+        """
         self.value = value
         self.rank = rank
         self.suit = suit
@@ -10,10 +20,13 @@ class Card():
     def __str__(self):
         return self.rank + " of " + self.suit
 
-# implements a standard 52 card deck
+
 class Deck():
-    ranks = [('Ace',1),('2',2),('3',3),('4',4),('5',5),('6',6),('7',7),('8',8),('9',9),('10',10),('Jack',10),('Queen',10),('King',10)]
-    suits = ['Spades','Diamonds','Hearts','Clubs']
+    """ Implement a standard 52-card deck """
+
+    ranks = [('Ace', 1), ('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8', 8), ('9', 9), ('10', 10),
+             ('Jack', 10), ('Queen', 10), ('King', 10)]
+    suits = ['Spades', 'Diamonds', 'Hearts', 'Clubs']
 
     def __init__(self):
         self.cards = []
@@ -25,21 +38,33 @@ class Deck():
                 c.suit = s
                 self.cards.append(c)
 
-# implements a poker hand. hands keep track of player bets
+
 class Hand():
+    """
+    Implement a blackjack hand. Hands keep track of player bets
+    """
+
     def __init__(self, bet=1):
         self.cards = []
         self.values = []
         self.valid_moves = []
         self.bet = bet
 
-    # need to update properties when card is added
     def add_card(self, card):
+        """
+        Update properties when card is added
+
+        :param card: type Card
+        """
         self.cards.append(card)
         self.__update_values()
         self.__update_valid_moves()
 
     def __update_valid_moves(self):
+        """
+        Update self.valid_moves to set of possible moves
+        """
+
         moves = ['Stay']
 
         # case for 21
@@ -64,8 +89,11 @@ class Hand():
 
         self.valid_moves = moves
 
-    # calculates value(s) of hand
     def __update_values(self):
+        """
+        Calculate value of hand
+        """
+
         v = [0]
         has_ace = False
 
@@ -78,40 +106,50 @@ class Hand():
         # hand is soft if below 12
         if has_ace:
             if v[0] < 12:
-                v.append(v[0]+10)
-        
+                v.append(v[0] + 10)
+
         self.values = v
 
     def __str__(self):
         return str([str(card) for card in self.cards])
 
-# implements a variable-sized shoe
+
 class CardStack():
+    """
+    Implement a variable-sized show
+    """
+
     def __init__(self, num_decks=1):
-        # build stack of decks and shuffle
+        """
+        Build stack of decks and shuffle
+
+        :param num_decks: number of decks to use
+        """
+
         self.stack = []
         for i in range(num_decks):
             deck = Deck()
             for card in deck.cards:
                 self.stack.append(card)
         random.shuffle(self.stack)
-        
+
     def draw(self):
         return self.stack.pop()
 
     def __len__(self):
         return len(self.stack)
 
+
 class Player():
     def __init__(self, chips=1000):
         self.chips = chips
         self.name = raw_input('Enter a name: ')
-        
+
     def __str__(self):
         return 'Player ' + self.name
 
     def place_bet(self):
-        print 'Player ' +  self.name + ': ' + str(self.chips) + ' chips'
+        print 'Player ' + self.name + ': ' + str(self.chips) + ' chips'
         bet = raw_input("Place your bet ('q' to quit): ")
         if bet == 'q':
             return bet
@@ -121,7 +159,7 @@ class Player():
                 bet = int(bet)
                 if bet < 1:
                     bet = int(raw_input('Bet must be at least 1. Try again: '))
-                elif self.chips-bet < 0:
+                elif self.chips - bet < 0:
                     bet = int(raw_input('Not enough chips. Try again: '))
                 else:
                     break
@@ -131,12 +169,12 @@ class Player():
         self.chips -= bet
         print 'chips: ' + str(self.chips)
         return bet
-    
+
     # given a poker hand, returns a move
     def make_move(self, hand):
         print str(self) + ', make a move for: ' + str(hand)
         moves_list = hand.valid_moves
-        print 'Valid moves - ' + str([str(i)+':'+move for i,move in enumerate(moves_list)])
+        print 'Valid moves - ' + str([str(i) + ':' + move for i, move in enumerate(moves_list)])
         move = raw_input("Choose a move (e.g. '0'): ")
         while True:
             try:
@@ -166,8 +204,12 @@ class Player():
                 move = raw_input('Invalid move. Choose again: ')
         return moves_list[move]
 
-# implements a poker game
+
 class Game():
+    """
+    Implement a blackjack game
+    """
+
     def __init__(self, num_players=2, num_decks=8):
         # positions is list of players and their hands
         self.positions = []
@@ -178,14 +220,18 @@ class Game():
         self.dealer = Hand()
         self.cardstack = CardStack(num_decks)
         self.chips = 0
-    
+
     def play(self):
+        """
+        Play a game of blackjack
+        """
+
         print "Starting a new game!\n"
 
         # play until all players quit
         while True:
             print "Starting a new round!\n"
-            
+
             # new shoe if less than one deck remaining
             if len(self.cardstack) < 52:
                 self.cardstack = CardStack(self.num_decks)
@@ -211,7 +257,7 @@ class Game():
             # handle dealer blackjack case
             if self.dealer.valid_moves == 'Blackjack':
                 print 'Dealer blackjack! :('
-                for player,hands in self.positions:
+                for player, hands in self.positions:
                     # push on player blackjack
                     if hands[0].valid_moves == 'Blackjack':
                         player.chips += hands[0].bet
@@ -220,21 +266,21 @@ class Game():
 
             # go through players' hands and take moves
             staying_hands = []
-            for player,hands in self.positions:
+            for player, hands in self.positions:
                 for hand in hands:
-                    
+
                     # loop until 21, bust, or stay
                     while True:
                         # check for 21 or blackjack
                         if hand.valid_moves == 'Blackjack':
-                            print str(player) + ' has blackjack and wins ' + str(2*hand.bet) + ' chips!'
-                            player.chips += 2*hand.bet
+                            print str(player) + ' has blackjack and wins ' + str(2 * hand.bet) + ' chips!'
+                            player.chips += 2 * hand.bet
                             break
                         if hand.valid_moves == '21':
                             print str(player) + ' has 21'
                             staying_hands.append([player, hand])
                             break
-                        
+
                         # if not 21, then get player move
                         selected_move = player.make_move(copy.deepcopy(hand))
                         if selected_move == 'Stay':
@@ -246,14 +292,14 @@ class Game():
                             break
                         if selected_move == 'Hit':
                             new_card = self.cardstack.draw()
-                            print player,'hits and draws a',new_card
+                            print player, 'hits and draws a', new_card
                             hand.add_card(new_card)
                             if hand.valid_moves == 'Bust':
                                 print 'Bust!'
                                 break
                         if selected_move == 'Double':
                             new_card = self.cardstack.draw()
-                            print player,'doubles down and draws a',new_card
+                            print player, 'doubles down and draws a', new_card
                             hand.add_card(new_card)
                             hand.bet *= 2
                             if hand.valid_moves == 'Bust':
@@ -262,10 +308,10 @@ class Game():
                             print str(player) + ' ends on ' + str(max(hand.values))
                             staying_hands.append([player, hand])
                             break
-                        
+
                         # for splits, make two new Hands and insert them after the current hand
                         if selected_move == 'Split':
-                            print player,' splits on two ',str(hand.cards[0].rank)
+                            print player, ' splits on two ', str(hand.cards[0].rank)
                             index = hands.index(hand) + 1
                             hand1 = Hand(hand.bet)
                             hand1.add_card(hand.cards[0])
@@ -274,7 +320,7 @@ class Game():
                             hands.insert(index, hand2)
                             hands.insert(index, hand1)
                             break
-            
+
             # if no more players, start new round
             if not staying_hands:
                 continue
@@ -287,9 +333,9 @@ class Game():
                     dealer_value = self.dealer.values[1]
                 else:
                     dealer_value = self.dealer.values[0]
-                    
+
                 # stay if more than 17 or hard 17
-                if dealer_value > 17 or (dealer_value == 17 and is_dealer_soft == False):
+                if dealer_value > 17 or (dealer_value == 17 and is_dealer_soft is False):
                     break
 
                 # hits on soft 17
@@ -306,36 +352,39 @@ class Game():
             else:
                 print 'Dealer has hand: ' + str(self.dealer)
                 print 'Dealer stays on ' + str(dealer_value)
-            for player,hand in staying_hands:
+            for player, hand in staying_hands:
                 # win
                 if is_dealer_busted or max(hand.values) > max(self.dealer.values):
-                    player.chips += 2*hand.bet
-                    print str(player) + ' wins ' + str(2*hand.bet) + ' chips with hand: ' + str(hand)
+                    player.chips += 2 * hand.bet
+                    print str(player) + ' wins ' + str(2 * hand.bet) + ' chips with hand: ' + str(hand)
                 # push
                 elif max(hand.values) == max(self.dealer.values):
                     player.chips += hand.bet
-                    print str(player) + ' pushes with hand: ' + str(hand) + ' and wins '+ str(hand.bet) + ' back'
+                    print str(player) + ' pushes with hand: ' + str(hand) + ' and wins ' + str(hand.bet) + ' back'
                 # loss
                 else:
                     print str(player) + ' loses with hand: ' + str(hand)
             print '\nEnd of round.\n\n'
 
-    # initial deal
     def deal_cards(self):
-        # follows casino dealing order (although it shouldn't matter)
+        """
+        Deal initial cards following casino order
+        """
         for i in xrange(2):
-            for player,hands in self.positions:
+            for player, hands in self.positions:
                 hands[0].add_card(self.cardstack.draw())
             self.dealer.add_card(self.cardstack.draw())
 
-    # prints all cards for everyone
     def print_status(self):
+        """
+        Print player hands, then print dealer hand
+        """
+
         for player, hands in self.positions:
             print '-----------------------'
             print 'Player ' + player.name
-            for i,hand in enumerate(hands):
+            for i, hand in enumerate(hands):
                 print 'Hand ' + str(i) + ': ' + str(hand)
             print '-----------------------'
         print 'Dealer: ' + str(self.dealer)
         print '-----------------------'
-
